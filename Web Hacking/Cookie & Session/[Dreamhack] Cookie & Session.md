@@ -68,8 +68,10 @@ Connectionless, Stateless 특성을 갖는 HTTP에서 상태를 유지하기 위
 
 <img src="https://velog.velcdn.com/images/silvergun8291/post/2e4af6c8-44d9-42dc-bf58-b16ee81a89b7/image.png">
 
+#
+---
+#
 
-
-
+> 출처 : https://dreamhack.io/
 
 
