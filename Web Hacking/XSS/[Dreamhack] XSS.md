@@ -95,3 +95,9 @@ window.open("http://hacker.dreamhack.io/")
 ```
 
 데이터 로드가 실패하도록 유도해서 뒤에 코드를 실행시킬 수 있습니다.
+
+#
+---
+#
+
+> 출처 : https://dreamhack.io/
