@@ -196,6 +196,7 @@ admin 유저의 패스워드를 admin으로 변경하도록 공격 코드를 짜
 #### 3. admin 계정으로 로그인
 
 username : admin
+
 password : admin
 
 <img src="https://velog.velcdn.com/images/silvergun8291/post/9615b359-6e3d-4e64-92cb-8e34e6796a7d/image.png">
