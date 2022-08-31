@@ -88,7 +88,7 @@ window.open("http://hacker.dreamhack.io/")
 
 ### onerror 이벤트 핸들러
 
-해당 태그가 요청한느 테이터 로드가 실패하면 이벤트 핸들러를 실행합니다.
+해당 태그가 요청하는 테이터 로드가 실패하면 이벤트 핸들러를 실행합니다.
 
 ```html
 <img src="valid.jpg" onerror="alert(document.domain)">
