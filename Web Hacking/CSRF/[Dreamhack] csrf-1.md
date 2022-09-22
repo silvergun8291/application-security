@@ -42,7 +42,7 @@ def check_csrf(param, cookie={"name": "name", "value": "value"}):
     return read_url(url, cookie)
 ```
 
-param를 CSRF 취약점이 발생하는 파라미터로 만들어 read_url 함수를 호출합니다.
+입력받은 url과 이용자의 쿠키로 해당 url을 방문하는 read_url 함수를 호출합니다. 그래서 CSRF 취약점이 발생합니다.
 
 
 #
