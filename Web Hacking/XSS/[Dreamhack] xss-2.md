@@ -1,3 +1,34 @@
+## 취약점 분석
+
+### vuln 함수
+
+```python
+@app.route("/vuln")
+def vuln():
+    return render_template("vuln.html")
+```
+
+* 이번 vuln 함수는 그냥 vuln.html 페이지를 랜더링 해주고 있습니다.
+
+### memo 함수
+
+```python
+@app.route("/memo")
+def memo():
+    global memo_text
+    text = request.args.get("memo", "")
+    memo_text += text + "\n"
+    return render_template("memo.html", memo=memo_text)
+```
+
+* 이용자가 입력한 값을 페이지에 그대로 출력하고 있습니다. 하지만 render_template 함수를 이용해서 출력하고 있어서 전과 같은 방법으로는 익스플로잇이 안 될수도 있을거 같습니다. 
+
+
+<br>
+
+
+## 익스플로잇
+
 <img src="https://velog.velcdn.com/images/silvergun8291/post/10c1f5f0-e466-44bb-af38-1e5017f05413/image.png">
 
 문제 사이트에 접속하면 전과 같이 3개의 연결된 페이지 목록이 있습니다.
@@ -22,7 +53,7 @@ flag 페이지에 들어가서 동일하게 XSS 공격을 시도해보면
 <br>
 
 
-XSS 필터링을 걸려있어서 우회를 해서 공격을 해야 할 거 같습니다.
+XSS 필터링이 걸려있어서 우회를 해서 공격을 해야 할 거 같습니다.
 
 onerror 이벤트 핸들러를 이용해서 우회 코드를 작성해보면
 
