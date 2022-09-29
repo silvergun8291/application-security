@@ -59,7 +59,7 @@ def ping():
 
 처음에는 host에 `8.8.8.8` 을 써서 보내고 프록시를 이용해서 중간에서 host 값을 변조해야 할거 같습니다.
 
-#
+<br>
 
 <img src="https://velog.velcdn.com/images/silvergun8291/post/6a952fc9-0402-4cea-9018-98485b5ee782/image.jpg">
 
