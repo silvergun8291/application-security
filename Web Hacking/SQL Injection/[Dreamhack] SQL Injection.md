@@ -1,6 +1,7 @@
 ## SQL Injection
 
 웹 서비스는 이용자의 입력을 SQL 구문에 포함해 요청하는 경우가 있습니다. 예를 들면, 로그인 시 ID/PW나 게시판에서 게시글의 제목과 내용을 SQL 구문에 포함합니다.
+
 이때 SQL 구문에 조작된 쿼리를 삽입하여 인증을 우회하거나, 데이터베이스의 정보를 유출하는 행위를 `SQL Injection`이라고 합니다. 
 
 #
@@ -46,7 +47,24 @@ SELECT * FROM accounts WHERE user_id='admin'
 
 ### Simple SQL Injection
 
+실습 목표는 질의를 통해 `admin` 결과를 반환하는 것입니다.
+
 **user_table**
+
+| uid | upw |
+| --- | --- |
+| guest | guest |
+| admin | ********** |
+
+`SQL Injection` 공격에서 제일 중요한 것은 이용자의 입력값이 `SQL` 구문으로 해석되도록 해야 합니다. 이를 위해 `'` 문자를 사용하겠습니다.
+
+#
+
+uid에 admin or 1을 입력하고 비밀번호를 입력하지 않았을 때 생성되는 쿼리문은 다음과 같습니다.
+
+```sql
+SELECT * FROM user_table WHERE uid='admin' or '1' and upw='';
+```
 
 
 
