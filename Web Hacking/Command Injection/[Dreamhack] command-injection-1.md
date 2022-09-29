@@ -81,7 +81,7 @@ def ping():
 
 <img src="https://velog.velcdn.com/images/silvergun8291/post/8c83a273-f9ab-492d-a86e-3df3bd3aa56d/image.png">
 
-결과를 확인해보면 `ping -c 3 8.8.8.8;cat flag.py`가 실행되어서 FLAG가 출력되었습니다.
+결과를 확인해보면 `ping -c 3 8.8.8.8;cat flag.py`가 실행되어서 `FLAG`가 출력되었습니다.
 
 
 <br>
