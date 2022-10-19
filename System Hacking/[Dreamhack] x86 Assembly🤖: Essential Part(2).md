@@ -97,7 +97,7 @@ mov rbp, rsp
 
 `SFP` 에 돌아갈 함수의 `RBP` 주소를 push 하고 `RBP` 위치를 현재 `RSP` 로 세팅합니다.
 
-![에필로그](https://user-images.githubusercontent.com/81484874/196737539-9f2c28b8-9e29-4485-a0d0-04585dcf8326.jpg)
+![프롤로그](https://user-images.githubusercontent.com/81484874/196739818-12116d6e-cd17-4d40-b7e6-08df0165d795.jpg)
 
 
 <br>
@@ -114,7 +114,7 @@ ret
 RSP 값을 RBP가 있는 곳까지 내려서 스택을 정리하고 RBP 위치를 원래 함수의 RBP 위치로 되돌립니다.
 그후 함수 호출 이후 명령어가 있는 주소로 점프합니다.
 
-![프롤로그](https://user-images.githubusercontent.com/81484874/196738134-e697af98-3804-430a-990b-49bd71a27323.jpg)
+![에필로그](https://user-images.githubusercontent.com/81484874/196739836-4deefb66-6c77-45c0-a35c-e9b0099cce20.jpg)
 
 
 <br>
