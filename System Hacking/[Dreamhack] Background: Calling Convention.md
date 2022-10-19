@@ -1,0 +1,293 @@
+### 함수 호출 규약
+
+함수의 호출 및 반환에 대한 약속입니다.
+
+함수를 호출할 때는 반환된 이후를 위해 호출자(Caller)의 상태(Stack frame)및 반환 주소(Return Addresss)를 저장해야 합니다. 또한 호출자는 피호출자(Callee)가 요구하는 인자를 전달해 줘야 하며, 피호출자의 실행이 종료될 때는 반환 값을 전달받아야 합니다.
+
+<br>
+
+---
+
+<br>
+
+### x86-64 호출 규약: SYSV
+
+```c
+// gcc -fno-asynchronous-unwind-tables -masm=intel -fno-omit-frame-pointer -o sysv sysv.c -fno-pic -O0
+
+#define ull unsigned long long
+ull callee(ull a1, int a2, int a3, int a4, int a5, int a6, int a7) {
+  ull ret = a1 + a2 + a3 + a4 + a5 + a6 + a7;
+  return ret;
+}
+void caller() { callee(123456789123456789, 2, 3, 4, 5, 6, 7); }
+int main() { caller(); }
+```
+
+<br>
+
+**1\. 인자 전달**
+
+6개의 인자를 RDI, RSI, RDX, RCX, R8, R9에 순서대로 저장하여 전달합니다.
+
+더 많은 인자를 사용할 때는 스택을 추가로 이용합니다.
+
+#
+
+
+```bash
+[-------------------------------------code-------------------------------------]
+   0x555555400653 <caller+1>:   mov    rbp,rsp
+   0x555555400656 <caller+4>:   push   0x7
+   0x555555400658 <caller+6>:   mov    r9d,0x6
+=> 0x55555540065e <caller+12>:  mov    r8d,0x5
+   0x555555400664 <caller+18>:  mov    ecx,0x4
+   0x555555400669 <caller+23>:  mov    edx,0x3
+   0x55555540066e <caller+28>:  mov    esi,0x2
+   0x555555400673 <caller+33>:  movabs rdi,0x1b69b4bacd05f15
+[------------------------------------stack-------------------------------------]
+```
+
+```bash
+[----------------------------------registers-----------------------------------]
+RAX: 0x0
+RBX: 0x0
+RCX: 0x4
+RDX: 0x3
+RSI: 0x2
+RDI: 0x1b69b4bacd05f15
+RBP: 0x7fffffffe170 --> 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:   push   r15)
+RSP: 0x7fffffffe168 --> 0x7
+RIP: 0x55555540067d (<caller+43>:       call   0x5555554005fa <callee>)
+R8 : 0x5
+R9 : 0x6
+R10: 0x2
+R11: 0x7
+R12: 0x5555554004f0 (<_start>:  xor    ebp,ebp)
+R13: 0x7fffffffe260 --> 0x1
+R14: 0x0
+R15: 0x0
+EFLAGS: 0x246 (carry PARITY adjust ZERO sign trap INTERRUPT direction overflow)
+```
+
+#
+
+callee(123456789123456789, 2, 3, 4, 5, 6, 7)로 함수를 호출했는데
+
+```bash
+rdi → 123456789123456789
+rsi → 2
+rdx → 3
+rcx → 4
+r8 → 5
+r9 → 6
+rsp → 7
+```
+
+인자들이 rdi, rsi, rdx, rcx, r8, r9, rsp 순서로 설정되었습니다.
+
+<br>
+
+**2\. 반환 주소 저장**
+
+ callee에서 반환되었을 때, rbp 이전의 주소를 꺼내어 원래 실행 흐름으로 돌아갈 수 있습니다.
+
+void caller() { callee(123456789123456789, 2, 3, 4, 5, 6, 7); } 부분을 보면 caller 함수가 callee 함수를 호출하고 있습니다.
+
+이 시점을 gdb로 봐보면
+
+```bash
+[-------------------------------------code-------------------------------------]
+   0x5555554005f1 <frame_dummy+1>:      mov    rbp,rsp
+   0x5555554005f4 <frame_dummy+4>:      pop    rbp
+   0x5555554005f5 <frame_dummy+5>:      jmp    0x555555400560 <register_tm_clones>
+=> 0x5555554005fa <callee>:     push   rbp
+   0x5555554005fb <callee+1>:   mov    rbp,rsp
+   0x5555554005fe <callee+4>:   mov    QWORD PTR [rbp-0x18],rdi
+   0x555555400602 <callee+8>:   mov    DWORD PTR [rbp-0x1c],esi
+   0x555555400605 <callee+11>:  mov    DWORD PTR [rbp-0x20],edx
+[------------------------------------stack-------------------------------------]
+0000| 0x7fffffffe160 --> 0x555555400682 (<caller+48>:   add    rsp,0x8)
+0008| 0x7fffffffe168 --> 0x7
+0016| 0x7fffffffe170 --> 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:  push   r15)
+0024| 0x7fffffffe178 --> 0x555555400697 (<main+14>:     mov    eax,0x0)
+0032| 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:     push   r15)
+0040| 0x7fffffffe188 --> 0x7ffff7a03c87 (<__libc_start_main+231>:       mov    edi,eax)
+0048| 0x7fffffffe190 --> 0x1
+0056| 0x7fffffffe198 --> 0x7fffffffe268 --> 0x7fffffffe4ad ("/home/ion/dreamhack/Calling_Convention/sysv")
+[------------------------------------------------------------------------------]
+```
+
+```bash
+Dump of assembler code for function caller:
+   0x0000555555400652 <+0>:     push   rbp
+   0x0000555555400653 <+1>:     mov    rbp,rsp
+   0x0000555555400656 <+4>:     push   0x7
+   0x0000555555400658 <+6>:     mov    r9d,0x6
+   0x000055555540065e <+12>:    mov    r8d,0x5
+   0x0000555555400664 <+18>:    mov    ecx,0x4
+   0x0000555555400669 <+23>:    mov    edx,0x3
+   0x000055555540066e <+28>:    mov    esi,0x2
+   0x0000555555400673 <+33>:    movabs rdi,0x1b69b4bacd05f15
+   0x000055555540067d <+43>:    call   0x5555554005fa <callee>
+   0x0000555555400682 <+48>:    add    rsp,0x8
+   0x0000555555400686 <+52>:    nop
+   0x0000555555400687 <+53>:    leave
+   0x0000555555400688 <+54>:    ret
+End of assembler dump.
+```
+
+callee 함수가 시작되는 시점에서 스택 꼭대기에 0x555555400682 <caller+48> 값이 저장되어 있습니다.
+
+이 값은 caller 함수의 코드를 봐보면 callee() 함수 호출 이후 코드 주소입니다.
+
+callee 함수가 종료되면 이 주소를 꺼내어 원래 실행 흐름으로 돌아갈 수 있습니다.
+
+<br>
+
+**3\. 스택 프레임 저장**
+
+SFP : 스택의 가장 낮은 주소를 가리키는 포인터
+
+Callee는 Caller의 rbp(SFP)를 저장하고 있다가 반환될 때, SFP를 꺼내어 caller의 스택 프레임으로 돌아갑니다.
+
+#
+
+callee 함수에서 push rbp 이후, 스택의 값과 caller 함수에서 push rbp 이후 스택의 값을 비교해 보면
+
+```bash
+[-------------------------------------code-------------------------------------]
+   0x5555554005f4 <frame_dummy+4>:      pop    rbp
+   0x5555554005f5 <frame_dummy+5>:      jmp    0x555555400560 <register_tm_clones>
+   0x5555554005fa <callee>:     push   rbp
+=> 0x5555554005fb <callee+1>:   mov    rbp,rsp
+   0x5555554005fe <callee+4>:   mov    QWORD PTR [rbp-0x18],rdi
+   0x555555400602 <callee+8>:   mov    DWORD PTR [rbp-0x1c],esi
+   0x555555400605 <callee+11>:  mov    DWORD PTR [rbp-0x20],edx
+   0x555555400608 <callee+14>:  mov    DWORD PTR [rbp-0x24],ecx
+[------------------------------------stack-------------------------------------]
+0000| 0x7fffffffe158 --> 0x7fffffffe170 --> 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:       push   r15)
+0008| 0x7fffffffe160 --> 0x555555400682 (<caller+48>:   add    rsp,0x8)
+0016| 0x7fffffffe168 --> 0x7
+0024| 0x7fffffffe170 --> 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:  push   r15)
+0032| 0x7fffffffe178 --> 0x555555400697 (<main+14>:     mov    eax,0x0)
+0040| 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:     push   r15)
+0048| 0x7fffffffe188 --> 0x7ffff7a03c87 (<__libc_start_main+231>:       mov    edi,eax)
+0056| 0x7fffffffe190 --> 0x1
+[------------------------------------------------------------------------------]
+```
+
+callee: 0x7fffffffe180 --> 0x5555554006a0
+
+#
+
+```bash
+[-------------------------------------code-------------------------------------]
+   0x555555400650 <callee+86>:  pop    rbp
+   0x555555400651 <callee+87>:  ret
+   0x555555400652 <caller>:     push   rbp
+=> 0x555555400653 <caller+1>:   mov    rbp,rsp
+   0x555555400656 <caller+4>:   push   0x7
+   0x555555400658 <caller+6>:   mov    r9d,0x6
+   0x55555540065e <caller+12>:  mov    r8d,0x5
+   0x555555400664 <caller+18>:  mov    ecx,0x4
+[------------------------------------stack-------------------------------------]
+0000| 0x7fffffffe170 --> 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:  push   r15)
+0008| 0x7fffffffe178 --> 0x555555400697 (<main+14>:     mov    eax,0x0)
+0016| 0x7fffffffe180 --> 0x5555554006a0 (<__libc_csu_init>:     push   r15)
+0024| 0x7fffffffe188 --> 0x7ffff7a03c87 (<__libc_start_main+231>:       mov    edi,eax)
+0032| 0x7fffffffe190 --> 0x1
+0040| 0x7fffffffe198 --> 0x7fffffffe268 --> 0x7fffffffe4ad ("/home/ion/dreamhack/Calling_Convention/sysv")
+0048| 0x7fffffffe1a0 --> 0x100008000
+0056| 0x7fffffffe1a8 --> 0x555555400689 (<main>:        push   rbp)
+[------------------------------------------------------------------------------]
+```
+
+caller: 0x7fffffffe180 --> 0x5555554006a0
+
+callee의 rbp 값의 caller의 rbp 값과 같습니다.
+
+<br>
+
+**4\. 스택 프레임 할당**
+
+함수 프롤로그에서 mov rbp, rsp로 rbp와 rsp가 같은 주소를 가리키게 합니다. 그 후 rsp의 값을 빼서 rbp와 rsp 사이 공간을 새로운 스택 프레임으로 할당합니다.
+
+```bash
+[-------------------------------------code-------------------------------------]
+   0x555555400645 <frame_dummy+5>:      jmp    0x5555554005b0 <register_tm_clones>
+   0x55555540064a <main>:       push   rbp
+   0x55555540064b <main+1>:     mov    rbp,rsp
+=> 0x55555540064e <main+4>:     sub    rsp,0x10
+   0x555555400652 <main+8>:     mov    DWORD PTR [rbp-0x10],0x5
+   0x555555400659 <main+15>:    mov    DWORD PTR [rbp-0xc],0x3
+   0x555555400660 <main+22>:    mov    DWORD PTR [rbp-0x8],0x1
+   0x555555400667 <main+29>:    mov    edx,DWORD PTR [rbp-0x10]
+[------------------------------------stack-------------------------------------]
+```
+
+함수 프롤로그에서 mov rbp,rsp 이후 sub rsp, 0x10 명령을 통해 0x10 Byte 크기의 스택 프레임을 할당하고 있습니다.
+
+<br>
+
+**5\. 반환 값 전달**
+
+함수의 에필로그에 도달하면 함수의 반환 값을 rax에 저장합니다.
+
+```bash
+[-------------------------------------code-------------------------------------]
+   0x55555540066e <caller+28>:  mov    esi,0x2
+   0x555555400673 <caller+33>:  movabs rdi,0x1b69b4bacd05f15
+   0x55555540067d <caller+43>:  call   0x5555554005fa <callee>
+=> 0x555555400682 <caller+48>:  add    rsp,0x8
+   0x555555400686 <caller+52>:  nop
+   0x555555400687 <caller+53>:  leave
+   0x555555400688 <caller+54>:  ret
+   0x555555400689 <main>:       push   rbp
+[------------------------------------stack-------------------------------------]
+```
+
+```bash
+gdb-peda$ print $rax
+$1 = 0x1b69b4bacd05f30
+```
+
+0x1b69b4bacd05f30  →  123,456,789,123,456,816
+
+callee 함수의 에필로그 이후 rax 값을 확인해보니 rax에 a1 + a2 + a3 + a4 + a5 + a6 + a7 값이 저장되어 있습니다.
+
+<br>
+
+**6\. 반환**
+
+함수 에필로그에서는 leave로 스택 프레임을 꺼낸 뒤 ret로 호출자로 복귀합니다.
+
+이때 이전에 rbp에 저장해뒀던 caller의 sfp가 rbp가 되고 반환 주소로 저장해두었던 callee 호출 이후 caller의 코드 주소가 rip가 됩니다.
+
+```bash
+[-------------------------------------code-------------------------------------]
+   0x55555540066e <caller+28>:  mov    esi,0x2
+   0x555555400673 <caller+33>:  movabs rdi,0x1b69b4bacd05f15
+   0x55555540067d <caller+43>:  call   0x5555554005fa <callee>
+=> 0x555555400682 <caller+48>:  add    rsp,0x8
+   0x555555400686 <caller+52>:  nop
+   0x555555400687 <caller+53>:  leave
+   0x555555400688 <caller+54>:  ret
+   0x555555400689 <main>:       push   rbp
+```
+
+```bash
+gdb-peda$ print $rip
+$2 = (void (*)()) 0x555555400682 <caller+48>
+gdb-peda$ print $rbp
+$3 = (void *) 0x7fffffffe170
+```
+
+#
+
+---
+
+<br>
+
+> [Background: Calling Convention
+](https://dreamhack.io/lecture/courses/54)
