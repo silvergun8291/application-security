@@ -97,7 +97,7 @@ mov rbp, rsp
 
 `SFP` 에 돌아갈 함수의 `RBP` 주소를 push 하고 `RBP` 위치를 현재 `RSP` 로 세팅합니다.
 
-![프롤로그](https://user-images.githubusercontent.com/81484874/196739818-12116d6e-cd17-4d40-b7e6-08df0165d795.jpg)
+![프롤로그](https://user-images.githubusercontent.com/81484874/196740054-8c2a5a37-6699-450d-bc71-eafc7955dcd8.jpg)
 
 
 <br>
