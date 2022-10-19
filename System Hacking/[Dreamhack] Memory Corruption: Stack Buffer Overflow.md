@@ -1,0 +1,96 @@
+### 스택 버퍼 오버플로우
+
+스택의 버퍼에서 발생하는 오버플로우를 뜻합니다.
+
+#
+
+버퍼 : 컴퓨터 과학에서 데이터가 목적지로 이동되기 전에 보관되는 임시 저장소의 의미로 쓰였으나 현대에는 데이터가 저장될 수 있는 모든 단위로 쓰이기도 합니다.
+
+오버플로우 : 넘쳐 흐르다 라는 뜻으로 10 바이트 크기의 버퍼에 20 바이트의 데이터를 넣을 때처럼 버퍼의 크기보다 더 큰 데이터를 넣으려고 할 때 발생합니다.
+
+#
+
+일반적으로 버퍼는 메모리상에 연속해서 할당되어 있기 때문에, 오버플로우가 발생하면 큰 보안 위협으로 이어집니다.
+
+#
+
+스택 영역에서 버퍼 오버플로우가 발생했을 때 어떤 보안 위협이 있는지 알아보면
+
+<br>
+
+---
+
+<br>
+
+#### 1\. 중요 데이터 변조
+
+<img src="https://velog.velcdn.com/images/silvergun8291/post/b7428db4-7f7a-4ea0-979c-818569c0122f/image.png">
+
+
+check_auth 함수는 인자로 넘겨 받은 password를 temp에 복사하고 "SECRET_PASSWORD"와 같은지 비교한 후 같으면 auth에 1을 다르면 auth에 0을 대입하여 리턴하는 함수입니다.
+
+main 함수는 argv[1]을 인자로 check_auth 함수를 호출하고 리턴 값이 1이면 "Hello Admin!\n"을 0이면 "Access Denied!\n"를 출력합니다.
+
+#
+
+이 코드에서 11번 라인을 보면 password의 길이가 16 바이트를 넘을 경우 temp의 크기가 16 바이트 밖에 되지 않기 때문에, 오버플로우가 발생하게 됩니다.
+
+그러면 temp 이전에 선언된 변수인 auth 값을 조작할 수 있게 됩니다.
+
+<img src="https://velog.velcdn.com/images/silvergun8291/post/2ca8a70a-4efc-49ff-ad51-66e30d9e3be1/image.png">
+
+
+a를 16 바이트 입력하고 1을 입력하자 auth 값이 1로 조작되어 Hello Admin!이 출력되었습니다.
+
+<br>
+
+#### 2\. 데이터 유출
+
+일반적으로 C언어 문자열은 NULL 바이트로 종결되고, 표준 문자열 출력 함수들은 NULL 바이트를 문자열의 끝으로 인식합니다.
+
+만약 버퍼 오버플로우를 발생시켜서 이 NULL 바이트를 모두 제거해버리면, 해당 버퍼를 출력해서 다른 버퍼의 데이터까지 읽을 수 있습니다. 획득한 데이터는 각종 방어기법을 우회하는데 이용할 수 있고 해당 시스템의 중요 정보일 수 있습니다.
+
+<img src="https://velog.velcdn.com/images/silvergun8291/post/5d5717f2-389c-40cd-9ed5-d4995c570f48/image.png">
+
+
+위에 코드는 name 변수에 12 바이트의 문자열을 입력받고 있습니다. 여기서 name은 8 바이트 문자열이기 때문에, 4바이트를 초과해서 입력을 받게 됩니다.
+
+secret 변수와 name 변수 사이에는 마침 barrier라는 4바이트 크기의 NULL 바이트가 존재하고 name 변수에 12 바이트 크기의 값을 입력하면 이 NULL 바이트들을 덮어 버려서 NULL 바이트가 제거됩니다.
+
+#
+
+12 바이트 크기의 문자열을 입력해보면
+
+<img src="https://velog.velcdn.com/images/silvergun8291/post/151a5113-aee1-4220-a31a-020e7f818d47/image.png">
+
+
+NULL 바이트가 제거되어서 secret 변수의 secret message까지 출력되었습니다.
+
+<br>
+
+#### 3\. 실행 흐름 조작
+
+함수를 호출할 때 RET에 돌아갈 주소를 저장하고 반환될 때 RET의 주소를 꺼내 원래 실행 흐름으로 돌아가는데, 만약 RET의 값을 조작하면 어떤일이 벌어질까요?
+
+프로세스의 실행 흐름이 조작할 수 있게 됩니다.
+
+<img src="https://velog.velcdn.com/images/silvergun8291/post/7e4d6d08-c3cb-4f95-afa6-fc82cbf9a1cf/image.png">
+
+
+#
+
+위 프로그램의 main 함수 반환 주소를 0x4141414141414141로 조작해보면
+
+<img src="https://velog.velcdn.com/images/silvergun8291/post/efaddd6f-7a8f-4bcf-a9f1-9b4aa5cfdbd8/image.png">
+
+
+실행 흐름이 조작되어 Sucess!가 출력되었습니다.
+
+#
+
+---
+
+<br>
+
+> [Memory Corruption: Stack Buffer Overflow
+](https://dreamhack.io/lecture/courses/60)
